@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NeonGenesis v3 | Ultra Premium</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- React & ReactDOM (UMD for browser) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for on-the-fly JSX compilation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+      :root {
+        --neon-red: #ff3e3e;
+        --neon-blue: #00d2ff;
+        --dark-surface: #0a0a0b;
+      }
+      
+      body {
+        background-color: var(--dark-surface);
+        color: #f1f1f1;
+        font-family: 'Inter', sans-serif;
+        overflow-x: hidden;
+      }
+
+      /* Animated Mesh Background */
+      .mesh-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        background: 
+          radial-gradient(at 0% 0%, rgba(255, 62, 62, 0.15) 0px, transparent 50%),
+          radial-gradient(at 100% 0%, rgba(0, 210, 255, 0.1) 0px, transparent 50%),
+          radial-gradient(at 100% 100%, rgba(188, 19, 254, 0.1) 0px, transparent 50%),
+          radial-gradient(at 0% 100%, rgba(255, 62, 62, 0.05) 0px, transparent 50%);
+        filter: blur(80px);
+        animation: mesh-move 20s ease infinite alternate;
+      }
+
+      @keyframes mesh-move {
+        0% { transform: scale(1); }
+        100% { transform: scale(1.1); }
+      }
+
+      .cyber-font { font-family: 'Orbitron', sans-serif; }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar { width: 5px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--neon-red); }
+
+      /* Laser Border Effect */
+      .laser-border {
+        position: relative;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .laser-border:hover {
+        border-color: rgba(0, 210, 255, 0.4);
+        box-shadow: 0 0 20px rgba(0, 210, 255, 0.1);
+      }
+
+      /* Noise Grain */
+      .noise-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        pointer-events: none;
+        opacity: 0.03;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+      
+      /* Loading State */
+      .init-loader {
+        height: 100vh;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #555;
+        font-family: 'Orbitron', sans-serif;
+        letter-spacing: 0.2em;
+        font-size: 12px;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div class="mesh-bg"></div>
+    <div class="noise-overlay"></div>
+    
+    <div id="root">
+        <div class="init-loader">
+            <div style="width: 40px; height: 40px; border: 2px solid #333; border-top-color: #ff3e3e; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
+            INITIALIZING CORE...
+        </div>
+        <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+    </div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // --- ICONS (Inlined to avoid dependency issues on static hosts) ---
+        const Icon = ({ path, className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {path}
+            </svg>
+        );
+
+        const Icons = {
+            Youtube: (props) => <Icon {...props} path={<><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></>} />,
+            Zap: (props) => <Icon {...props} path={<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>} />,
+            Shield: (props) => <Icon {...props} path={<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>} />,
+            Cpu: (props) => <Icon {...props} path={<><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></>} />,
+            Terminal: (props) => <Icon {...props} path={<><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></>} />,
+            Clipboard: (props) => <Icon {...props} path={<><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></>} />,
+            X: (props) => <Icon {...props} path={<><path d="M18 6 6 18"/><path d="m6 6 12 12"/></>} />,
+            CheckCircle2: (props) => <Icon {...props} path={<><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></>} />,
+            AlertTriangle: (props) => <Icon {...props} path={<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>} />,
+            Sparkles: (props) => <Icon {...props} path={<><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M9 3v4"/><path d="M3 5h4"/><path d="M3 9h4"/></>} />,
+            Download: (props) => <Icon {...props} path={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></>} />,
+            ExternalLink: (props) => <Icon {...props} path={<><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></>} />,
+            Copy: (props) => <Icon {...props} path={<><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></>} />,
+            Check: (props) => <Icon {...props} path={<polyline points="20 6 9 17 4 12"/>} />,
+            Monitor: (props) => <Icon {...props} path={<><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></>} />,
+            Smartphone: (props) => <Icon {...props} path={<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>} />,
+            LayoutGrid: (props) => <Icon {...props} path={<><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></>} />
+        };
+
+        // --- UTILS ---
+        const extractVideoId = (url) => {
+            const pattern = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+            const match = url.match(pattern);
+            return match ? match[1] : null;
+        };
+
+        const generateThumbnails = (videoId) => {
+            return [
+                {
+                    resolution: 'maxres',
+                    label: 'Max Resolution (HD)',
+                    url: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+                    width: 1280,
+                    height: 720,
+                },
+                {
+                    resolution: 'high',
+                    label: 'High Quality',
+                    url: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+                    width: 480,
+                    height: 360,
+                },
+                {
+                    resolution: 'medium',
+                    label: 'Medium Quality',
+                    url: `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`,
+                    width: 320,
+                    height: 180,
+                },
+                {
+                    resolution: 'standard',
+                    label: 'Standard Quality',
+                    url: `https://img.youtube.com/vi/${videoId}/sddefault.jpg`,
+                    width: 640,
+                    height: 480,
+                },
+            ];
+        };
+
+        // --- COMPONENTS ---
+        const ThumbnailCard = ({ thumbnail, isFeatured = false, onToast, onInvalid }) => {
+            const [isLoaded, setIsLoaded] = useState(false);
+            const [copied, setCopied] = useState(false);
+
+            const handleImageLoad = (e) => {
+                const img = e.currentTarget;
+                if (img.naturalWidth === 120) {
+                    if (onInvalid) onInvalid(thumbnail.resolution);
+                } else {
+                    setIsLoaded(true);
+                }
+            };
+
+            const handleDownload = async () => {
+                onToast(`Preparing Download...`, 'info');
+                try {
+                    const response = await fetch(thumbnail.url);
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `youtube_asset_${thumbnail.resolution}.jpg`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    onToast('Download Successful', 'success');
+                } catch (e) {
+                    window.open(thumbnail.url, '_blank');
+                }
+            };
+
+            const handleCopy = async () => {
+                try {
+                    await navigator.clipboard.writeText(thumbnail.url);
+                    setCopied(true);
+                    onToast('URL Copied', 'success');
+                    setTimeout(() => setCopied(false), 2000);
+                } catch (err) {
+                    onToast('Access Denied', 'error');
+                }
+            };
+
+            // If it's invalid (handled by parent removal, but safe check here) or hidden via CSS initially
+            const styleClass = `group laser-border rounded-3xl overflow-hidden transition-all duration-500 backdrop-blur-3xl flex flex-col ${isFeatured ? 'md:flex-row md:col-span-2' : ''}`;
+
+            return (
+                <div className={styleClass}>
+                    <div className={`relative overflow-hidden bg-black/40 ${isFeatured ? 'md:w-3/5 aspect-video' : 'aspect-video w-full'}`}>
+                        {!isLoaded && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-10 h-10 border-2 border-white/5 border-t-red-500 rounded-full animate-spin"></div>
+                            </div>
+                        )}
+                        
+                        <img
+                            src={thumbnail.url}
+                            alt={thumbnail.label}
+                            onLoad={handleImageLoad}
+                            className={`w-full h-full object-cover transition-all duration-1000 ease-out will-change-transform ${isLoaded ? 'opacity-100 scale-100 group-hover:scale-105' : 'opacity-0 scale-110'}`}
+                        />
+
+                        <div className="absolute top-4 left-4 flex gap-2">
+                            <span className="bg-black/60 backdrop-blur-xl border border-white/10 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-white shadow-2xl">
+                                {thumbnail.width} × {thumbnail.height}
+                            </span>
+                            {isFeatured && (
+                                <span className="bg-red-500/20 backdrop-blur-xl border border-red-500/30 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest text-red-400 shadow-2xl flex items-center gap-1">
+                                    <Icons.LayoutGrid className="w-3 h-3" /> MASTER
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className={`p-6 flex flex-col justify-between ${isFeatured ? 'md:w-2/5' : ''}`}>
+                        <div>
+                            <div className="flex items-center gap-2 mb-2">
+                                {thumbnail.width > 700 ? <Icons.Monitor className="w-3 h-3 text-cyan-400" /> : <Icons.Smartphone className="w-3 h-3 text-purple-400" />}
+                                <span className="text-[10px] font-bold text-gray-500 tracking-[0.2em] uppercase">{thumbnail.label}</span>
+                            </div>
+                            <h3 className="text-lg font-bold cyber-font text-white mb-6 group-hover:text-red-500 transition-colors">
+                                ASSET_{thumbnail.resolution.toUpperCase()}
+                            </h3>
+                        </div>
+
+                        <div className="space-y-3">
+                            <button
+                                onClick={handleDownload}
+                                className="w-full py-4 rounded-xl bg-white text-black font-black text-xs tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-[0_10px_30px_rgba(255,255,255,0.1)] active:scale-95 flex items-center justify-center gap-2"
+                            >
+                                <Icons.Download className="w-4 h-4" />
+                                INITIATE DOWNLOAD
+                            </button>
+
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleCopy}
+                                    className="flex-1 py-3 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 text-white font-bold text-[10px] tracking-widest transition-all flex items-center justify-center gap-2"
+                                >
+                                    {copied ? <Icons.Check className="w-3 h-3 text-green-400" /> : <Icons.Copy className="w-3 h-3" />}
+                                    {copied ? 'COPIED' : 'COPY URL'}
+                                </button>
+                                <a
+                                    href={thumbnail.url}
+                                    target="_blank"
+                                    className="p-3 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 text-white transition-all"
+                                >
+                                    <Icons.ExternalLink className="w-4 h-4" />
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [url, setUrl] = useState('');
+            const [videoId, setVideoId] = useState(null);
+            const [invalidResolutions, setInvalidResolutions] = useState(new Set());
+            const [error, setError] = useState(null);
+            const [isProcessing, setIsProcessing] = useState(false);
+            const [systemReady, setSystemReady] = useState(false);
+            const [toasts, setToasts] = useState([]);
+
+            useEffect(() => {
+                setTimeout(() => setSystemReady(true), 300);
+            }, []);
+
+            const addToast = (message, type) => {
+                const id = Date.now();
+                setToasts(prev => [...prev, { id, message, type }]);
+                setTimeout(() => {
+                    setToasts(prev => prev.filter(t => t.id !== id));
+                }, 3000);
+            };
+
+            const handleExtract = async (e) => {
+                if (e) e.preventDefault();
+                if (!url) {
+                    addToast("Sequence required", "error");
+                    return;
+                }
+
+                setError(null);
+                setVideoId(null);
+                setInvalidResolutions(new Set());
+                setIsProcessing(true);
+
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                const id = extractVideoId(url);
+                if (id) {
+                    setVideoId(id);
+                    addToast("Encryption Broken", "success");
+                } else {
+                    setError("SIGNATURE_FAIL");
+                    addToast("Invalid URL", "error");
+                }
+                setIsProcessing(false);
+            };
+
+            const handleInvalidAsset = (res) => {
+                setInvalidResolutions(prev => {
+                    const next = new Set(prev);
+                    next.add(res);
+                    return next;
+                });
+            };
+
+            const filteredThumbnails = useMemo(() => {
+                if (!videoId) return [];
+                return generateThumbnails(videoId).filter(t => !invalidResolutions.has(t.resolution));
+            }, [videoId, invalidResolutions]);
+
+            const handlePaste = async () => {
+                try {
+                    const text = await navigator.clipboard.readText();
+                    setUrl(text);
+                    addToast("Data Injected", "info");
+                } catch (err) {
+                    addToast("Access Denied", "error");
+                }
+            };
+
+            return (
+                <div className={`min-h-screen flex flex-col transition-opacity duration-1000 ${systemReady ? 'opacity-100' : 'opacity-0'}`}>
+                    
+                    <div className="fixed top-8 right-8 z-[100] flex flex-col gap-3 pointer-events-none">
+                        {toasts.map(toast => (
+                            <div key={toast.id} className="pointer-events-auto flex items-center gap-3 px-5 py-3 rounded-2xl bg-black/80 border border-white/10 backdrop-blur-2xl shadow-2xl animate-in slide-in-from-right fade-in">
+                                {toast.type === 'success' ? <Icons.CheckCircle2 className="w-4 h-4 text-green-400" /> : 
+                                toast.type === 'error' ? <Icons.AlertTriangle className="w-4 h-4 text-red-400" /> : 
+                                <Icons.Zap className="w-4 h-4 text-cyan-400" />}
+                                <span className="text-[10px] font-black tracking-widest uppercase">{toast.message}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <main className="flex-grow container mx-auto px-6 py-12 flex flex-col items-center">
+                        
+                        <header className="w-full flex justify-between items-center mb-24 max-w-6xl">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center">
+                                    <Icons.Youtube className="w-5 h-5 text-black" />
+                                </div>
+                                <h1 className="cyber-font text-xl font-black tracking-tighter text-white">NEON<span className="text-red-500">GENESIS</span></h1>
+                            </div>
+                            <div className="flex gap-6">
+                                <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500">
+                                    <Icons.Cpu className="w-3 h-3 text-red-500" /> V3.2_ULTRA
+                                </div>
+                                <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500">
+                                    <Icons.Shield className="w-3 h-3 text-cyan-500" /> SECURE_LAYER
+                                </div>
+                            </div>
+                        </header>
+
+                        <div className="w-full max-w-2xl mb-24 text-center">
+                            <div className="mb-12">
+                                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-white text-[10px] font-black tracking-[0.3em] uppercase mb-6">
+                                    <Icons.Sparkles className="w-3 h-3 text-yellow-400" /> New Decryption Engine
+                                </div>
+                                <h2 className="text-5xl md:text-7xl font-black cyber-font tracking-tighter text-white mb-6 leading-tight">
+                                    VISUAL<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-cyan-500">EXTRACTOR</span>
+                                </h2>
+                                <p className="text-gray-500 text-sm font-medium tracking-wide max-w-sm mx-auto">
+                                    Decrypt high-definition visual assets from any YouTube sequence instantly.
+                                </p>
+                            </div>
+
+                            <div className="relative group p-1 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-xl">
+                                <div className="relative flex items-center bg-black/40 rounded-[22px]">
+                                    <div className="pl-6 pr-4">
+                                        <Icons.Terminal className={`w-5 h-5 ${isProcessing ? 'text-red-500 animate-pulse' : 'text-gray-700'}`} />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={url}
+                                        onChange={(e) => setUrl(e.target.value)}
+                                        placeholder="Paste link sequence..."
+                                        className="flex-1 bg-transparent text-white placeholder-gray-800 py-6 px-2 focus:outline-none font-mono text-sm tracking-widest"
+                                        disabled={isProcessing}
+                                    />
+                                    <div className="flex gap-3 pr-4">
+                                        {!url && (
+                                            <button onClick={handlePaste} className="p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
+                                                <Icons.Clipboard className="w-4 h-4 text-gray-500" />
+                                            </button>
+                                        )}
+                                        {url && (
+                                            <button onClick={() => setUrl('')} className="p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
+                                                <Icons.X className="w-4 h-4 text-gray-500" />
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={(e) => handleExtract(e)}
+                                            disabled={!url || isProcessing}
+                                            className="bg-white text-black font-black text-[10px] tracking-widest px-8 py-3 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-xl disabled:opacity-50"
+                                        >
+                                            {isProcessing ? 'LOADING' : 'INITIATE'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {videoId && (
+                            <div className="w-full max-w-6xl animate-in fade-in slide-in-from-bottom-20 duration-1000">
+                                <div className="flex items-center gap-6 mb-12">
+                                    <div className="h-px flex-1 bg-white/10"></div>
+                                    <span className="text-[10px] font-black cyber-font text-red-500 tracking-[0.5em] uppercase">Assets Retrieved</span>
+                                    <div className="h-px flex-1 bg-white/10"></div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                    {filteredThumbnails.map((thumb, idx) => (
+                                        <ThumbnailCard 
+                                            key={thumb.resolution}
+                                            thumbnail={thumb}
+                                            isFeatured={idx === 0}
+                                            onToast={addToast}
+                                            onInvalid={handleInvalidAsset}
+                                        />
+                                    ))}
+                                    {filteredThumbnails.length === 0 && !isProcessing && (
+                                        <div className="col-span-full py-20 text-center text-gray-600 font-mono text-xs uppercase tracking-widest">
+                                            Scanning complete. No valid HD assets found for this ID.
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </main>
+
+                    <footer className="py-12 border-t border-white/5 text-center">
+                        <p className="text-[10px] font-bold text-gray-600 tracking-[0.4em] uppercase">
+                            NeonGenesis Systems // Distributed by AI Beasts007
+                        </p>
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
